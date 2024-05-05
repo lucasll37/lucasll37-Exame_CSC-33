@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Exame_CSC-33</string>
+    <string name="app_name">Exame CSC-33</string>
+    <string name="banner_hello_world">Exame de CSC-33\n\nApp de Geolocalização\n\n\nDenys Derlian\nLucas Lima\nRafael Hoffmann</string>
 </resources>
