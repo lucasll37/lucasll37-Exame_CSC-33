@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                locationTextView.setText(String.format("Localização:\n\nLatitude = %.6f,\nLongitude = %.6f", latitude, longitude));
+                locationTextView.setText(String.format("Localização:\n\nLatitude = %.10f,\nLongitude = %.10f", latitude, longitude));
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {}
