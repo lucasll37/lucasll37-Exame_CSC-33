@@ -1,4 +1,5 @@
 package com.example.exame_csc_33;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -7,6 +8,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.TextView;
+
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -15,11 +17,19 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class MainActivity extends AppCompatActivity {
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private LocationManager locationManager;
     private LocationListener locationListener;
-    private TextView locationTextView; // TextView para exibir a localização
+    private TextView locationTextView;
+    private GoogleMap mMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,14 +44,25 @@ public class MainActivity extends AppCompatActivity {
 
         locationTextView = findViewById(R.id.tvLocation);
 
+        // Obter o SupportMapFragment e notificar quando o mapa estiver pronto para ser usado
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
-
-
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
                 locationTextView.setText(String.format("Localização:\n\nLatitude = %.10f,\nLongitude = %.10f", latitude, longitude));
+
+                // Atualizar a posição do marcador no mapa
+                if (mMap != null) {
+                    LatLng currentLocation = new LatLng(latitude, longitude);
+                    mMap.clear();
+                    mMap.addMarker(new MarkerOptions().position(currentLocation).title("Você está aqui"));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
+                }
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -56,6 +77,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startLocationUpdates();
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        // Opções adicionais de configuração do mapa podem ser adicionadas aqui
     }
 
     @Override
