@@ -7,6 +7,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -23,6 +24,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -49,27 +53,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                locationTextView.setText(String.format("Localização:\n\nLatitude = %.10f,\nLongitude = %.10f", latitude, longitude));
+        // Inicializar o LocationManager e LocationListener
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-                // Atualizar a posição do marcador no mapa
-                if (mMap != null) {
-                    LatLng currentLocation = new LatLng(latitude, longitude);
-                    mMap.clear();
-                    mMap.addMarker(new MarkerOptions().position(currentLocation).title("Você está aqui"));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
-                }
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                // Atualizar a localização no mapa
+                LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                mMap.clear();
+                mMap.addMarker(new MarkerOptions().position(userLocation).title("Sua Localização"));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+
+                // Atualizar o TextView com a localização
+                locationTextView.setText("Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
+                Log.d("LocationUpdate", "Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.d("LocationStatus", "Provider status changed: " + provider + ", status: " + status);
+            }
 
-            public void onProviderEnabled(String provider) {}
+            @Override
+            public void onProviderEnabled(String provider) {
+                Log.d("LocationProvider", "Provider enabled: " + provider);
+            }
 
-            public void onProviderDisabled(String provider) {}
+            @Override
+            public void onProviderDisabled(String provider) {
+                Log.d("LocationProvider", "Provider disabled: " + provider);
+            }
         };
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -97,7 +111,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
+            List<String> providers = locationManager.getProviders(true);
+            if (providers.contains(LocationManager.GPS_PROVIDER)) {
+                Log.d("GPSProvider", "GPS Provider is available");
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
+            }
+            if (providers.contains(LocationManager.NETWORK_PROVIDER)) {
+                Log.d("NetworkProvider", "Network Provider is available");
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 1, locationListener);
+            }
+            if (!providers.contains(LocationManager.GPS_PROVIDER) && !providers.contains(LocationManager.NETWORK_PROVIDER)) {
+                Log.d("LocationProviders", "No location providers are available");
+            }
         }
     }
 
@@ -113,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onResume() {
         super.onResume();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
+            startLocationUpdates();
         }
     }
 }
